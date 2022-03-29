@@ -40,7 +40,7 @@ class App
     /**
      * App constructor.
      */
-    public function __construct()
+    private function __construct()
     {
         $uriParts    = parse_url($_SERVER['REQUEST_URI']);
         $this->path  = $uriParts['path'] ?? null;

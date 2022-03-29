@@ -1,0 +1,25 @@
+{
+  "name": "dummy/dummy",
+  "description": "description",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "davidsarkisyan",
+      "email": "d.sarkisyn.dev@gmail.com"
+    }
+  ],
+  "require-dev": {
+    "phpunit/phpunit": "^9"
+  },
+  "autoload": {
+    "psr-4": {
+      "IvelumTest\\": "src",
+      "Tests\\": "tests"
+    }
+  },
+  "require": {
+    "ext-curl": "*",
+    "ext-dom": "*"
+  }
+}

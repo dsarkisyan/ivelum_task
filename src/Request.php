@@ -23,8 +23,9 @@ class Request
         $output = curl_exec($ch);
         curl_close($ch);
 
-        if (!$output) {
-            return 'No result.';
+        if (!$output || $output === 'Unknown.') {
+            http_response_code(404);
+            return $output;
         }
         return $output;
     }

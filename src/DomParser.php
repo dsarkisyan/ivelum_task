@@ -6,6 +6,7 @@ namespace IvelumTest;
 
 use DOMDocument;
 use DOMElement;
+use DOMText;
 
 /**
  * Class DomParser
@@ -44,15 +45,16 @@ class DomParser
         if (!$htmlString) {
             return 'No result.';
         }
-        $html = new DOMDocument();
-        $html->loadHTML($htmlString);
-        $divs = $html->getElementsByTagName('div');
+        $html = new DOMDocument('1.0', 'UTF-8');
+        @$html->loadHTML(mb_convert_encoding($htmlString, 'HTML-ENTITIES', 'UTF-8'));
+
+        $results = $html->getElementsByTagName('body');
 
         /**
-         * @var DOMElement $div
+         * @var DOMElement $result
          */
-        foreach ($divs as $div) {
-            $div->textContent = $this->helper->addSymbolToString($div->textContent);
+        foreach ($results as $result) {
+            $this->recursiveChangeText($result);
         }
 
         $aTags = $html->getElementsByTagName('a');
@@ -65,38 +67,59 @@ class DomParser
             $urlParts = parse_url($mainUrl);
 
             if (!empty($urlParts['host']) && $urlParts['host'] === $this->defaultHost) {
-                str_replace($this->defaultHost, 'localhost', $mainUrl);
+                $mainUrl = str_replace($this->defaultSchema . '://' . $this->defaultHost, 'localhost', $mainUrl);
             }
             $aTag->setAttribute('href', $mainUrl);
         }
 
-        $imgs = $html->getElementsByTagName('img');
-
-        /**
-         * @var DOMElement $img
-         */
-        foreach ($imgs as $img) {
-            $img->setAttribute(
-                'src',
-                $this->defaultSchema . '://' .$this->defaultHost . '/' . $img->getAttribute('src')
-            );
-        }
-
-        $links = $html->getElementsByTagName('link');
-
-        /**
-         * @var DOMElement $link
-         */
-        foreach ($links as $link) {
-            $href = $link->getAttribute('href');
-            if ($href) {
-                $link->setAttribute(
-                    'href',
-                    $this->defaultSchema . '://' .$this->defaultHost . '/' . $href
-                );
-            }
-        }
-
         return $html->saveHTML();
+    }
+
+    /**
+     * @param string $extension
+     * @param string $content
+     * @return string
+     */
+    public function insertContent(string $extension, string $content): string
+    {
+        $result = '';
+        switch ($extension) {
+            case 'css':
+            case 'js':
+                $result = $content ;
+                break;
+            case 'gif':
+                header('Content-type: image/jpeg;');
+                header("Content-Length: " . strlen($content));
+                $result = $content;
+                break;
+            case 'ico':
+                header('Content-type: image/x-icon;');
+                header("Content-Length: " . strlen($content));
+                $result = $content;
+                break;
+        }
+        return $result;
+    }
+
+    /**
+     * @param DOMElement $node
+     */
+    private function recursiveChangeText(DOMElement $node): void
+    {
+        if ($node->hasChildNodes() && (int)$node->nodeType === 1) {
+            /**
+             * @var DOMElement $childNode
+             */
+            foreach ($node->childNodes as $childNode) {
+                if ($childNode instanceof DOMText) {
+                    $childNode->textContent = $this->helper->addSymbolToString($childNode->textContent);
+                    continue;
+                }
+                $this->recursiveChangeText($childNode);
+            }
+        } elseif (!$node->hasChildNodes() && (int)$node->nodeType === 3) {
+            $node->textContent = $this->helper->addSymbolToString($node->textContent);
+        }
     }
 }

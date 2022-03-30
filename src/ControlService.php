@@ -36,6 +36,23 @@ class ControlService
     private $defaultUri;
 
     /**
+     * @var bool
+     */
+    private $isFileContent;
+
+    /**
+     * @var string
+     */
+    private $fileExtension;
+    
+    private const POSSIBLE_EXTENSIONS = [
+        'css' => true,
+        'js'  => true,
+        'gif' => true,
+        'ico' => true,
+    ];
+
+    /**
      * ControlService constructor.
      * @param string|null $path
      * @param string|null $query
@@ -47,12 +64,19 @@ class ControlService
         $this->query = $query;
         $this->request = new Request();
         $this->domParser = new DomParser('news.ycombinator.com', 'https');
+        $this->isFileContent = false;
     }
 
+    /**
+     * @return string
+     */
     public function makeContentForMainApp(): string
     {
         $link = $this->parseURI();
         $res = $this->request->getOutsourceInfo($link);
+        if ($this->isFileContent) {
+            return $this->domParser->insertContent($this->fileExtension, $res);
+        }
         return $this->domParser->changeData($res);
     }
 
@@ -68,7 +92,7 @@ class ControlService
         }
 
         if (!empty($explodedParams['scheme'])) {
-            $link .= $explodedParams['scheme'].'://';
+            $link .= $explodedParams['scheme'] . '://';
             unset($explodedParams['scheme']);
         }
 
@@ -81,6 +105,7 @@ class ControlService
 
         if ($this->path) {
             $link .= $this->path;
+            $this->checkPathContains($this->path);
         }
 
         if ($explodedParams) {
@@ -88,5 +113,17 @@ class ControlService
         }
 
         return $link;
+    }
+
+    /**
+     * @param string $haystack
+     */
+    private function checkPathContains(string $haystack): void
+    {
+        $parts = explode('.', $haystack);
+        if (!empty($parts[1]) && self::POSSIBLE_EXTENSIONS[$parts[1]]) {
+            $this->isFileContent = true;
+            $this->fileExtension = $parts[1];
+        }
     }
 }

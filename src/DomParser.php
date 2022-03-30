@@ -67,7 +67,7 @@ class DomParser
             $urlParts = parse_url($mainUrl);
 
             if (!empty($urlParts['host']) && $urlParts['host'] === $this->defaultHost) {
-                $mainUrl = str_replace($this->defaultSchema . '://' . $this->defaultHost, 'localhost', $mainUrl);
+                $mainUrl = str_replace($this->defaultSchema . '://' . $this->defaultHost, '/', $mainUrl);
             }
             $aTag->setAttribute('href', $mainUrl);
         }
